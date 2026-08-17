@@ -1,0 +1,5 @@
+# Copy to local-env.sh (gitignored) only if firmware is not in this tree.
+# In-repo Tag_FW_EFR32xG22/ and ESP32_AP-Flasher/ are used by default.
+
+# export TAG_FW_ROOT=/path/to/Tag_FW_EFR32xG22
+# export AP_DIR=/path/to/ESP32_AP-Flasher

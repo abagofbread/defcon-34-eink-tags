@@ -1,0 +1,44 @@
+# Local session / debug artifacts
+.cursor/
+*.log
+logs/
+dumps/
+uart.bin
+local-env.sh
+mono_crash.*
+preflight-report.md
+
+# Built tag firmware (rebuild locally)
+firmware/*.s37
+firmware/.pinprov-version
+firmware/.flash-image
+*.s37
+full_binaries/
+ota_files/
+
+# Firmware / PlatformIO / Simplicity Studio build trees
+.pio/
+**/out/
+**/autogen/
+**/build/
+**/EFR32xG22_OEPL_cmake/
+**/GNU ARM*/
+*.slps
+*.mak
+
+# Vendored binaries — local convenience only, never commit
+openocd-dist/
+openocd-efm32-series2/
+tools/Commander-cli.app/
+tools/SimplicityCommander-Mac/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# IDE
+.vscode/
+
+# macOS
+.DS_Store

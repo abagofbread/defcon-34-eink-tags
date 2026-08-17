@@ -1,0 +1,111 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Program Tag — Open EPaper Link</title>
+	<link rel="stylesheet" href="main.css?2.78" type="text/css" />
+	<script src="vendor/pako.min.js"></script>
+	<script src="kiosk-encode.js?2.88"></script>
+	<script src="main.js?2.78" defer></script>
+	<script src="program.js?2.92"></script>
+</head>
+<body>
+	<header>
+		<div class="logo"><a href="/">Open EPaper Link</a> — Program tag</div>
+	</header>
+	<main style="max-width: 640px; margin: 2rem auto; padding: 0 1rem;">
+		<section>
+			<h2>1. Identify tag</h2>
+			<p>Scan or type the MAC when ready to program. You can prepare an image first without the tag being online.</p>
+			<label for="progmac">Tag MAC</label>
+			<input id="progmac" type="text" maxlength="16" pattern="[0-9A-Fa-f]{16}" placeholder="AABBCCDDEEFF0011" style="width:100%;font-family:monospace;">
+			<p id="progtaginfo"></p>
+			<p>
+				<label for="proghwtype">Tag type for preview / encode</label>
+				<select id="proghwtype" style="width:100%;">
+					<option value="4F" selected>M3 2.6&quot; BWRY (360×184)</option>
+					<option value="4E">M3 2.6&quot; BW (360×184)</option>
+					<option value="4B">M3 2.2&quot; BWRY (296×160)</option>
+					<option value="4A">M3 1.6&quot; BWRY (200×200)</option>
+					<option value="33">M3 2.9&quot; (384×168)</option>
+					<option value="01">M2 2.9&quot; BWR (296×128)</option>
+					<option value="custom">custom / other…</option>
+				</select>
+			</p>
+			<p id="proghwcustomwrap" style="display:none;">
+				<label for="proghwcustom">Hardware type (hex, e.g. 4F)</label>
+				<input id="proghwcustom" type="text" maxlength="2" pattern="[0-9A-Fa-f]{1,2}" placeholder="4F" style="width:6rem;font-family:monospace;">
+			</p>
+		</section>
+		<section>
+			<h2>2. Choose image</h2>
+			<p>Pick a JPEG/PNG or draw on the canvas. Adjust tone, fit, and pan; drag the preview to reposition.</p>
+			<p>
+				<label for="progfit">Image fit</label>
+				<select id="progfit">
+					<option value="contain" selected>Fit entire image (scale down, white borders)</option>
+					<option value="cover">Fill tag (scale up, crop edges)</option>
+					<option value="stretch">Stretch to tag (ignore aspect ratio)</option>
+				</select>
+			</p>
+			<p>
+				<label for="progrotate">Rotate</label>
+				<select id="progrotate">
+					<option value="0" selected>0°</option>
+					<option value="1">90° clockwise</option>
+					<option value="2">180°</option>
+					<option value="3">270° clockwise</option>
+				</select>
+			</p>
+			<p>
+				<label for="progscale">Zoom before dither</label>
+				<input type="range" id="progscale" min="25" max="200" value="100" step="5" style="vertical-align:middle;width:min(280px,70%);">
+				<span id="progscaleval">100%</span>
+			</p>
+			<p>
+				<label for="progpanx">Pan horizontal</label>
+				<input type="range" id="progpanx" min="-100" max="100" value="0" step="1" style="vertical-align:middle;width:min(280px,70%);">
+				<span id="progpanxval">0</span>
+			</p>
+			<p>
+				<label for="progpany">Pan vertical</label>
+				<input type="range" id="progpany" min="-100" max="100" value="0" step="1" style="vertical-align:middle;width:min(280px,70%);">
+				<span id="progpanyval">0</span>
+				<button type="button" id="progpanreset" style="margin-left:0.5rem;">Reset pan</button>
+			</p>
+			<p>
+				<label for="progshadows" title="Lifts dark areas so fur and shadows keep detail on e-paper">Shadow detail</label>
+				<input type="range" id="progshadows" min="0" max="100" value="35" step="5" style="vertical-align:middle;width:min(280px,70%);">
+				<span id="progshadowsval">35%</span>
+			</p>
+			<p>
+				<label for="progcontrast">Contrast</label>
+				<input type="range" id="progcontrast" min="75" max="125" value="100" step="5" style="vertical-align:middle;width:min(280px,70%);">
+				<span id="progcontrastval">100%</span>
+			</p>
+			<p>
+				<input type="file" id="progfile" accept="image/jpeg,image/png">
+				<button type="button" id="progpaint">Blank canvas</button>
+				<button type="button" id="progannotate" disabled title="Draw or add text on top of the chosen image">Annotate image</button>
+			</p>
+			<div id="progpreview"></div>
+			<div id="progcanvaswrap"></div>
+			<p id="progstagestatus"></p>
+		</section>
+		<section>
+			<h2>3. Program</h2>
+			<p>Triple-tap the tag button to show the PIN, then enter it below and program. The tag must be awake and seen by the AP for this step. You can also open this page with <code>?mac=…&amp;pin=…</code> to prefill both fields.</p>
+			<p>
+				<label for="progpin">PIN</label>
+				<input id="progpin" type="text" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code">
+			</p>
+			<p>
+				<button type="button" id="progprogram" class="primary" disabled>Program tag</button>
+			</p>
+			<p id="progstatus"></p>
+		</section>
+	</main>
+	<div id="messages"></div>
+</body>
+</html>
