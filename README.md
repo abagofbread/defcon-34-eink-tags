@@ -1,4 +1,4 @@
-# tagflashingWithGlasgow
+# defcon-34-eink-tags
 
 ## What this is
 
