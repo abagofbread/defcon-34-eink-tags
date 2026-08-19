@@ -2,7 +2,7 @@
 
 ## What this is
 
-This is the repository for a fork of the Open E-Paper Link project. The major feature implemented here were the pin gated image provisioning feature and the AP-Portal image upload feature. The shipped fork is a lobotomized version of the firmware, locked down for operating a hostile Defcon environment.
+This is the repository for a fork of the [Open E-Paper Link](https://github.com/OpenEPaperLink/OpenEPaperLink) project (obviously big shout out and thank you). The major feature implemented here were the pin gated image provisioning feature and the AP-Portal image upload feature. The shipped fork is a lobotomized version of the firmware, locked down for operating a hostile Defcon environment.
 
 ## Hardware
 
