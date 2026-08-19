@@ -10,7 +10,70 @@ The primary target of the firmware flashing are the Solum 2.6 BWRY Newton Pro EL
 
 ## Firmware layout
 
-Much of the engineering effort was focused on the tag side, with the AP side being a largely vibe coded segment (as evident by the miserable slider bars). The state machine logic lives between oepl_provision.c and oepl_app.c, with us entering into the provisioning state and rendering the data after the triple tap (oepl_provision.c:oepl_provision_on_button_press and oepl_button.c:oepl_button_notify_release). The logic which handles our state transitions exists within oepl_app.c:oepl_app_process. 
+Much of the engineering effort was focused on the tag side, with the AP side being a largely vibe coded segment (as evident by the miserable slider bars). The state machine logic lives between oepl_provision.c and oepl_app.c, with us entering into the provisioning state and rendering the data after the triple tap (oepl_provision.c:oepl_provision_on_button_press and oepl_button.c:oepl_button_notify_release). The logic which handles our state transitions exists within oepl_app.c:oepl_app_process.
+
+There is no single C enum for kiosk mode. Tag behavior is the product of RAM/NVM flags in `oepl_provision.c`. Each poll advertises that mix as `AvailDataReq.customMode`, and the AP turns it into `provisionState` in `tag_db.cpp:fillNode`.
+
+```mermaid
+stateDiagram-v2
+  [*] --> UnprovIdle: boot OEPL_PROVISIONED=0
+  [*] --> Locked: boot OEPL_PROVISIONED=1 OEPL_UPDATES_UNLOCKED=0
+  [*] --> Unlocked: boot OEPL_PROVISIONED=1 OEPL_UPDATES_UNLOCKED=1
+
+  UnprovIdle: Unprovisioned idle
+  UnprovIdle: provisioned=0 pin_screen_active=0 upload_authorized=0
+  UnprovIdle: customMode=KIOSK_UNPROVISIONED 0x12
+  UnprovIdle: AP provisionState=kiosk_idle
+
+  PinVisible: PIN on screen
+  PinVisible: pin_screen_active=1 upload_authorized=0
+  PinVisible: customMode=PROVISIONING 0x10
+  PinVisible: AP provisionState=pin_visible
+
+  Authorized: PIN accepted
+  Authorized: pin_screen_active=1 upload_authorized=1
+  Authorized: customMode still PROVISIONING 0x10
+  Authorized: AP pinSessionOpen=1 provisionState=programming
+
+  ImageShown: download MD5 ok
+  ImageShown: end_pin_session user_image_uploaded=1
+  ImageShown: provisioned still 0 until CMD_PROVISION_COMPLETE
+  ImageShown: customMode=KIOSK_UNPROVISIONED 0x12
+
+  Locked: PIN gated
+  Locked: provisioned=1 updates_unlocked=0 pin_screen_active=0
+  Locked: customMode=PROVISION_AUTHORIZED 0x11
+  Locked: AP provisionState=locked
+
+  Unlocked: open polling
+  Unlocked: provisioned=1 updates_unlocked=1
+  Unlocked: customMode=NONE 0x00
+  Unlocked: AP provisionState=idle
+
+  UnprovIdle --> PinVisible: "triple-tap 3 in 800ms or CMD_ENTER_PROVISION_MODE 0x24"
+  UnprovIdle --> PinVisible: "boot OEPL_AWAITING_PIN_UI with no user image"
+  Locked --> PinVisible: "triple-tap or CMD_ENTER_PROVISION_MODE 0x24"
+  PinVisible --> PinVisible: "wrong or missing provisionPin"
+  PinVisible --> Authorized: "provisionPin matches"
+  PinVisible --> UnprovIdle: "300s timeout and no stored image"
+  PinVisible --> Locked: "300s timeout and already provisioned"
+  Authorized --> Authorized: "later image offer with wrong PIN is dropped"
+  Authorized --> ImageShown: "DATATYPE_IMG download then on_image_downloaded"
+  ImageShown --> Locked: "CMD_PROVISION_COMPLETE 0x22 unlock=0 first time only"
+  ImageShown --> Unlocked: "CMD_PROVISION_COMPLETE 0x22 unlock=1 first time only"
+  ImageShown --> Locked: "already provisioned so 0x22 is ignored"
+```
+
+| Tag flags | `customMode` in poll | AP `provisionState` |
+|-----------|---------------------|---------------------|
+| `pin_screen_active=1`, `upload_authorized=0` | `TAG_CUSTOM_MODE_PROVISIONING` (0x10) | `pin_visible` |
+| `pin_screen_active=1`, `upload_authorized=1` | still 0x10 | `programming` (`pinSessionOpen=1`) |
+| `provisioned=0`, PIN screen off | `TAG_CUSTOM_MODE_KIOSK_UNPROVISIONED` (0x12) | `kiosk_idle` |
+| `provisioned=1`, `updates_unlocked=0` | `TAG_CUSTOM_MODE_PROVISION_AUTHORIZED` (0x11) | `locked` |
+| `provisioned=1`, `updates_unlocked=1` | `TAG_CUSTOM_MODE_NONE` (0x00) | `idle` |
+
+`TAG_CUSTOM_MODE_PROVISION_AUTHORIZED` is the locked poll mode, not the in-RAM `upload_authorized` flag. Image offers are accepted only while `upload_authorized` is set (or `updates_unlocked` for a fully open tag). `CMD_PROVISION_COMPLETE` runs once: if `provisioned` is already 1, `oepl_app_process` drops it. A 1.5s button hold reboots and is not a kiosk state.
+ 
 
 ## Flash / build
 
